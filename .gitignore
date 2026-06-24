@@ -1,4 +1,36 @@
-# Logs
+# MCP 설정
+.mcp.json
+
+# Claude 로컬 설정
+.claude/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# 캐시
+.cache/
+.vite/
+dist/
+dist-ssr
+
+# 환경 변수
+.env
+.env.local
+.env.*.local
+
+# OS / 에디터
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 로그
 logs
 *.log
 npm-debug.log*
@@ -7,22 +39,4 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
 *.local
-
-# Env
-.env
-.env.*
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
