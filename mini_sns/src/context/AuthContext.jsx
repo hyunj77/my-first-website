@@ -42,10 +42,13 @@ export function AuthProvider({ children }) {
   const refreshProfile = () => { if (user) loadProfile(user.id) }
 
   const signUp = async ({ email, password, username, displayName }) => {
+    // emailRedirectTo: 이메일 인증 링크가 GitHub Pages 앱으로 돌아오도록 설정
+    const redirectTo = `${window.location.origin}${window.location.pathname}`
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: redirectTo,
         data: { username, display_name: displayName || username }
       }
     })

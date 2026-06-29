@@ -1,12 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// 공백·슬래시 제거 등 입력 오류 자동 보정
+const rawUrl = (import.meta.env.VITE_SUPABASE_URL || '').trim().replace(/\/+$/, '')
+const rawKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 
-// 환경변수가 없으면 빈 클라이언트(에러 방지용 플레이스홀더)
+// https:// 누락된 경우 자동 보완
+const supabaseUrl = rawUrl && !rawUrl.startsWith('http') ? `https://${rawUrl}` : rawUrl
+const supabaseAnonKey = rawKey
+
+export const isConfigured = !!(
+  supabaseUrl &&
+  supabaseAnonKey &&
+  supabaseUrl.includes('.supabase.co')
+)
+
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-key'
 )
-
-export const isConfigured = !!(supabaseUrl && supabaseAnonKey)
