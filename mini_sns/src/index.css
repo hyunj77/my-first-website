@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #f0f9ff;
+  min-height: 100vh;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #ffffff;
+  position: relative;
+  box-shadow: 0 0 60px rgba(0, 212, 255, 0.08);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #00D4FF; border-radius: 2px; }
+
+/* Ring chart animation */
+@keyframes ring-in {
+  from { stroke-dashoffset: var(--full); }
+  to   { stroke-dashoffset: var(--offset); }
+}
+
+.ring-anim { animation: ring-in 1.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+/* Scale press effect */
+.press:active { transform: scale(0.96); }
+
+/* Safe area */
+.bottom-safe { padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)); }
