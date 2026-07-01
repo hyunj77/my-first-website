@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import BottomNav from '../components/BottomNav'
 import PostCard from '../components/PostCard'
 
@@ -21,33 +20,11 @@ const DEMO_POSTS = [
 export default function FeedPage() {
   const [tab, setTab] = useState('workout')
   const [posts, setPosts] = useState([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*, profiles(username, display_name, avatar_url)')
-        .eq('category', tab)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (error || !data || data.length === 0) {
-        // Supabase 미연결이거나 데이터 없음 → 데모 데이터 사용
-        setPosts(DEMO_POSTS.filter(p => p.category === tab))
-      } else {
-        setPosts(data)
-      }
-    } catch {
-      setPosts(DEMO_POSTS.filter(p => p.category === tab))
-    } finally {
-      setLoading(false)
-    }
+  useEffect(() => {
+    setPosts(DEMO_POSTS.filter(p => p.category === tab))
   }, [tab])
-
-  useEffect(() => { fetchPosts() }, [fetchPosts])
 
   const filtered = posts.filter(p =>
     !search || p.caption?.toLowerCase().includes(search.toLowerCase()) ||
@@ -97,13 +74,7 @@ export default function FeedPage() {
 
       {/* 피드 그리드 */}
       <div className="px-4 pt-3 bottom-safe">
-        {loading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {Array(6).fill(0).map((_, i) => (
-              <div key={i} className="bg-gray-100 rounded-2xl animate-pulse" style={{ aspectRatio: '1' }} />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <span className="text-5xl">{tab === 'workout' ? '🏋️' : '🥗'}</span>
             <p className="text-gray-500 font-medium text-sm">첫 번째 게시물을 올려보세요!</p>

@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip } from 'recharts'
 import { TrendingUp, Flame, Droplets, Dumbbell } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import BottomNav from '../components/BottomNav'
 
@@ -16,43 +15,10 @@ const DEMO_WEEKLY = [
 ]
 
 export default function ReportPage() {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const [period, setPeriod] = useState('week')
-  const [records, setRecords] = useState(DEMO_WEEKLY)
 
-  useEffect(() => {
-    if (!user) return
-    fetchRecords()
-  }, [user, period])
-
-  const fetchRecords = async () => {
-    const days = period === 'week' ? 7 : 30
-    const from = new Date()
-    from.setDate(from.getDate() - days)
-
-    try {
-      const { data } = await supabase
-        .from('daily_records')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('record_date', from.toISOString().split('T')[0])
-        .order('record_date')
-
-      if (data && data.length > 0) {
-        const dayLabels = ['일', '월', '화', '수', '목', '금', '토']
-        setRecords(data.map(r => ({
-          day: dayLabels[new Date(r.record_date).getDay()],
-          calories: r.calories_consumed || 0,
-          exercise: r.exercise_duration || 0,
-          water: r.water_intake || 0,
-        })))
-      } else {
-        setRecords(DEMO_WEEKLY)
-      }
-    } catch {
-      setRecords(DEMO_WEEKLY)
-    }
-  }
+  const records = DEMO_WEEKLY
 
   const calorieGoal = profile?.daily_calorie_goal || 2000
   const exerciseGoal = profile?.daily_exercise_goal || 60
@@ -104,10 +70,10 @@ export default function ReportPage() {
         {/* 요약 카드 4개 */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: Flame, label: '평균 칼로리', value: `${avgCalories.toLocaleString()}`, unit: 'kcal', color: '#00D4FF', bg: 'from-[#00D4FF]/10 to-cyan-50', pct: Math.round(avgCalories / calorieGoal * 100) },
-            { icon: Dumbbell, label: '평균 운동', value: `${avgExercise}`, unit: '분/일', color: '#0891B2', bg: 'from-blue-100 to-blue-50', pct: Math.round(avgExercise / exerciseGoal * 100) },
-            { icon: Droplets, label: '평균 수분', value: `${avgWater}`, unit: 'ml/일', color: '#0E7490', bg: 'from-teal-100 to-teal-50', pct: Math.round(avgWater / 2000 * 100) },
-            { icon: Flame, label: '운동한 날', value: `${exerciseDays}`, unit: '일', color: '#f97316', bg: 'from-orange-100 to-orange-50', pct: Math.round(exerciseDays / records.length * 100) },
+            { icon: Flame,    label: '평균 칼로리', value: `${avgCalories.toLocaleString()}`, unit: 'kcal',  color: '#00D4FF', bg: 'from-[#00D4FF]/10 to-cyan-50',  pct: Math.round(avgCalories / calorieGoal * 100) },
+            { icon: Dumbbell, label: '평균 운동',   value: `${avgExercise}`,                  unit: '분/일', color: '#0891B2', bg: 'from-blue-100 to-blue-50',        pct: Math.round(avgExercise / exerciseGoal * 100) },
+            { icon: Droplets, label: '평균 수분',   value: `${avgWater}`,                     unit: 'ml/일', color: '#0E7490', bg: 'from-teal-100 to-teal-50',        pct: Math.round(avgWater / 2000 * 100) },
+            { icon: Flame,    label: '운동한 날',   value: `${exerciseDays}`,                 unit: '일',    color: '#f97316', bg: 'from-orange-100 to-orange-50',    pct: Math.round(exerciseDays / records.length * 100) },
           ].map(({ icon: Icon, label, value, unit, color, bg, pct }) => (
             <div key={label} className={`bg-gradient-to-br ${bg} rounded-2xl p-3.5`}>
               <div className="flex items-center justify-between mb-1">

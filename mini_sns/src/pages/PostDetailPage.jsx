@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Flame, MessageCircle, UserPlus, Copy, Send } from 'lucide-react'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 const DEMO_POST = {
@@ -25,87 +24,39 @@ const DEMO_COMMENTS = [
 ]
 
 export default function PostDetailPage() {
-  const { id } = useParams()
   const navigate = useNavigate()
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
 
-  const [post, setPost] = useState(null)
-  const [comments, setComments] = useState([])
+  const post = DEMO_POST
+  const [comments, setComments] = useState(DEMO_COMMENTS)
   const [liked, setLiked] = useState(false)
-  const [likeCount, setLikeCount] = useState(0)
+  const [likeCount, setLikeCount] = useState(post.likes_count)
   const [comment, setComment] = useState('')
   const [following, setFollowing] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [routineCopied, setRoutineCopied] = useState(false)
 
-  useEffect(() => {
-    fetchPost()
-    fetchComments()
-  }, [id])
-
-  const fetchPost = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*, profiles(username, display_name, avatar_url, bio)')
-        .eq('id', id)
-        .single()
-      const p = (!error && data) ? data : DEMO_POST
-      setPost(p)
-      setLikeCount(p.likes_count || 0)
-    } catch {
-      setPost(DEMO_POST)
-      setLikeCount(DEMO_POST.likes_count)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchComments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('comments')
-        .select('*, profiles(username, display_name, avatar_url)')
-        .eq('post_id', id)
-        .order('created_at')
-      setComments(!error && data?.length ? data : DEMO_COMMENTS)
-    } catch {
-      setComments(DEMO_COMMENTS)
-    }
-  }
-
-  const handleLike = async () => {
+  const handleLike = () => {
     if (liked) return
     setLiked(true)
     setLikeCount(prev => prev + 1)
-    try {
-      await supabase.rpc('increment_likes', { post_id: id })
-    } catch {}
   }
 
-  const handleComment = async (e) => {
+  const handleComment = (e) => {
     e.preventDefault()
     if (!comment.trim()) return
-    const content = comment.trim()
-    setComment('')
-
     const newComment = {
       id: `temp-${Date.now()}`,
-      content,
+      content: comment.trim(),
       created_at: new Date().toISOString(),
-      profiles: { username: profile?.username, display_name: profile?.display_name },
+      profiles: { username: profile?.username || 'me', display_name: profile?.display_name || '나' },
     }
     setComments(prev => [...prev, newComment])
-
-    try {
-      await supabase.from('comments').insert({ content, user_id: user.id, post_id: id })
-    } catch {}
+    setComment('')
   }
 
   const handleCopyRoutine = () => {
     setRoutineCopied(true)
     setTimeout(() => setRoutineCopied(false), 2000)
-    // 실제 구현 시 사용자의 다이어리에 루틴 복사
   }
 
   const timeDiff = (dateStr) => {
@@ -115,13 +66,6 @@ export default function PostDetailPage() {
     if (h < 24) return `${h}시간 전`
     return `${Math.floor(h / 24)}일 전`
   }
-
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="w-10 h-10 rounded-full border-4 border-t-[#00D4FF] border-gray-100 animate-spin" />
-    </div>
-  )
-  if (!post) return null
 
   const avatar = post.profiles?.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(post.profiles?.display_name || 'U')}&background=00D4FF&color=fff&size=80`
@@ -142,25 +86,23 @@ export default function PostDetailPage() {
             <p className="text-xs text-gray-400">@{post.profiles?.username}</p>
           </div>
         </div>
-        {user?.id !== post.user_id && (
-          <button
-            onClick={() => setFollowing(!following)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all press ${
-              following
-                ? 'bg-gray-100 text-gray-600'
-                : 'bg-gradient-to-r from-[#00D4FF] to-[#0891B2] text-white shadow-sm shadow-cyan-200'
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            {following ? '팔로잉' : '팔로우'}
-          </button>
-        )}
+        <button
+          onClick={() => setFollowing(!following)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all press ${
+            following
+              ? 'bg-gray-100 text-gray-600'
+              : 'bg-gradient-to-r from-[#00D4FF] to-[#0891B2] text-white shadow-sm shadow-cyan-200'
+          }`}
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+          {following ? '팔로잉' : '팔로우'}
+        </button>
       </div>
 
       {/* 이미지 */}
       <div className="w-full bg-gray-100" style={{ aspectRatio: '1' }}>
         <img
-          src={post.image_url || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80'}
+          src={post.image_url}
           alt="post"
           className="w-full h-full object-cover"
           onError={e => { e.target.src = 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80' }}

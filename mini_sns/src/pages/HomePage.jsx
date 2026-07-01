@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Droplets, Dumbbell, ChevronRight, Bell, Plus, Check } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { Droplets, Dumbbell, ChevronRight, Bell, Check } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import BottomNav from '../components/BottomNav'
 import RingChart from '../components/RingChart'
@@ -9,7 +8,7 @@ import RingChart from '../components/RingChart'
 const DEFAULT_WORKOUTS = ['벤치프레스 3×10', '스쿼트 3×12', '데드리프트 2×8', '풀업 3×실패']
 
 export default function HomePage() {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const navigate = useNavigate()
   const [record, setRecord] = useState(null)
   const [water, setWater] = useState(0)
@@ -18,46 +17,38 @@ export default function HomePage() {
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    if (!user) return
-    supabase
-      .from('daily_records')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('record_date', today)
-      .single()
-      .then(({ data }) => {
-        if (data) { setRecord(data); setWater(data.water_intake || 0) }
-      })
-  }, [user])
+    try {
+      const saved = localStorage.getItem(`fitsta_record_${today}`)
+      if (saved) {
+        const data = JSON.parse(saved)
+        setRecord(data)
+        setWater(data.water_intake || 0)
+      }
+    } catch {}
+  }, [today])
 
-  const upsertRecord = async (patch) => {
+  const upsertRecord = (patch) => {
     const merged = {
-      user_id: user.id,
-      record_date: today,
       calories_consumed: record?.calories_consumed || 0,
       water_intake: water,
       exercise_duration: record?.exercise_duration || 0,
       ...patch,
     }
-    const { data } = await supabase
-      .from('daily_records')
-      .upsert(merged, { onConflict: 'user_id,record_date' })
-      .select()
-      .single()
-    if (data) setRecord(data)
+    setRecord(merged)
+    try { localStorage.setItem(`fitsta_record_${today}`, JSON.stringify(merged)) } catch {}
   }
 
-  const addWater = async (ml) => {
+  const addWater = (ml) => {
     const nw = Math.max(0, water + ml)
     setWater(nw)
     upsertRecord({ water_intake: nw })
   }
 
-  const calorieGoal   = profile?.daily_calorie_goal   || 2000
-  const exerciseGoal  = profile?.daily_exercise_goal  || 60
-  const waterGoal     = 2000
-  const calories      = record?.calories_consumed || 0
-  const exerciseMin   = record?.exercise_duration || 0
+  const calorieGoal  = profile?.daily_calorie_goal  || 2000
+  const exerciseGoal = profile?.daily_exercise_goal || 60
+  const waterGoal    = 2000
+  const calories     = record?.calories_consumed || 0
+  const exerciseMin  = record?.exercise_duration || 0
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? '좋은 아침이에요 ☀️' : hour < 18 ? '좋은 오후예요 💪' : '좋은 저녁이에요 🌙'
@@ -112,9 +103,9 @@ export default function HomePage() {
             />
             <div className="flex-1 space-y-3">
               {[
-                { emoji: '🔥', label: '칼로리', val: calories,     goal: calorieGoal,  unit: 'kcal', color: '#00D4FF' },
-                { emoji: '💪', label: '운동',   val: exerciseMin,  goal: exerciseGoal, unit: '분',   color: '#0891B2' },
-                { emoji: '💧', label: '수분',   val: water,        goal: waterGoal,    unit: 'ml',   color: '#0E7490' },
+                { emoji: '🔥', label: '칼로리', val: calories,    goal: calorieGoal,  unit: 'kcal', color: '#00D4FF' },
+                { emoji: '💪', label: '운동',   val: exerciseMin, goal: exerciseGoal, unit: '분',   color: '#0891B2' },
+                { emoji: '💧', label: '수분',   val: water,       goal: waterGoal,    unit: 'ml',   color: '#0E7490' },
               ].map(({ emoji, label, val, goal, unit, color }) => (
                 <div key={label}>
                   <div className="flex justify-between text-xs mb-1">

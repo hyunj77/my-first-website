@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Settings, Grid2X2, ChevronRight, Flame, Edit3, LogOut } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { Grid2X2, ChevronRight, Flame, Edit3, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import BottomNav from '../components/BottomNav'
-import PostCard from '../components/PostCard'
 
 function StreakCalendar({ streak }) {
   const today = new Date()
@@ -13,7 +11,6 @@ function StreakCalendar({ streak }) {
     d.setDate(today.getDate() - (34 - i))
     return {
       date: d.getDate(),
-      month: d.getMonth(),
       active: i >= 35 - streak,
       isToday: i === 34,
     }
@@ -46,48 +43,18 @@ function StreakCalendar({ streak }) {
 }
 
 export default function MyPage() {
-  const { user, profile, signOut, updateProfile } = useAuth()
+  const { profile, signOut, updateProfile } = useAuth()
   const navigate = useNavigate()
 
-  const [myPosts, setMyPosts] = useState([])
-  const [stats, setStats] = useState({ followers: 0, following: 0, posts: 0 })
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({ display_name: '', bio: '' })
 
   useEffect(() => {
-    if (!user) return
-    fetchMyPosts()
-    fetchStats()
     setEditForm({ display_name: profile?.display_name || '', bio: profile?.bio || '' })
-  }, [user, profile])
-
-  const fetchMyPosts = async () => {
-    try {
-      const { data } = await supabase
-        .from('posts')
-        .select('*, profiles(username, display_name, avatar_url)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      setMyPosts(data || [])
-    } catch {}
-  }
-
-  const fetchStats = async () => {
-    try {
-      const [{ count: followers }, { count: following }, { count: posts }] = await Promise.all([
-        supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
-        supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
-        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
-      ])
-      setStats({ followers: followers || 0, following: following || 0, posts: posts || 0 })
-    } catch {}
-  }
+  }, [profile])
 
   const handleSaveProfile = async () => {
-    await updateProfile({
-      display_name: editForm.display_name,
-      bio: editForm.bio,
-    })
+    await updateProfile({ display_name: editForm.display_name, bio: editForm.bio })
     setEditing(false)
   }
 
@@ -122,7 +89,7 @@ export default function MyPage() {
         {/* 프로필 */}
         <div className="flex items-center gap-4">
           <div className="relative">
-            <img src={avatar} alt="avatar" className="w-20 h-20 rounded-full border-3 border-[#00D4FF] object-cover" style={{ borderWidth: 3 }} />
+            <img src={avatar} alt="avatar" className="w-20 h-20 rounded-full object-cover" style={{ border: '3px solid #00D4FF' }} />
             {streak > 0 && (
               <div className="absolute -bottom-1 -right-1 bg-orange-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 border-white">
                 🔥{streak}
@@ -163,9 +130,9 @@ export default function MyPage() {
         {/* 통계 */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: '게시물', value: stats.posts },
-            { label: '팔로워', value: stats.followers },
-            { label: '팔로잉', value: stats.following },
+            { label: '게시물', value: 0 },
+            { label: '팔로워', value: 0 },
+            { label: '팔로잉', value: 0 },
           ].map(({ label, value }) => (
             <div key={label} className="bg-gray-50 rounded-2xl py-3 text-center">
               <p className="font-black text-xl text-gray-900">{value}</p>
@@ -215,22 +182,16 @@ export default function MyPage() {
             <Grid2X2 className="w-5 h-5 text-[#00D4FF]" />
             <span className="font-bold text-gray-800 text-sm">내 게시물</span>
           </div>
-          {myPosts.length === 0 ? (
-            <div className="flex flex-col items-center py-12 gap-3 bg-gray-50 rounded-3xl">
-              <span className="text-4xl">📸</span>
-              <p className="text-gray-500 text-sm font-medium">아직 게시물이 없어요</p>
-              <button
-                onClick={() => navigate('/create')}
-                className="px-5 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#0891B2] text-white text-sm font-bold rounded-full press"
-              >
-                첫 오운완 올리기
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {myPosts.map(post => <PostCard key={post.id} post={post} />)}
-            </div>
-          )}
+          <div className="flex flex-col items-center py-12 gap-3 bg-gray-50 rounded-3xl">
+            <span className="text-4xl">📸</span>
+            <p className="text-gray-500 text-sm font-medium">아직 게시물이 없어요</p>
+            <button
+              onClick={() => navigate('/create')}
+              className="px-5 py-2.5 bg-gradient-to-r from-[#00D4FF] to-[#0891B2] text-white text-sm font-bold rounded-full press"
+            >
+              첫 오운완 올리기
+            </button>
+          </div>
         </div>
 
         {/* 설정 메뉴 */}

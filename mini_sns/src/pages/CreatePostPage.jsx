@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Image, Sparkles, Plus, Trash2 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { ArrowLeft, Sparkles, Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const STEP_LABELS = ['내용 입력', '사진 선택', '스티커 합성', '게시']
@@ -22,7 +21,7 @@ const SAMPLE_IMAGES = {
 }
 
 export default function CreatePostPage() {
-  const { user, profile } = useAuth()
+  const { profile } = useAuth()
   const navigate = useNavigate()
 
   const [step, setStep] = useState(0)
@@ -34,7 +33,6 @@ export default function CreatePostPage() {
   const [routines, setRoutines] = useState([{ name: '', sets: '', reps: '', weight: '' }])
   const [posting, setPosting] = useState(false)
 
-  const calorieGoal = profile?.daily_calorie_goal || 2000
   const exerciseGoal = profile?.daily_exercise_goal || 60
 
   const addRoutine = () => setRoutines(prev => [...prev, { name: '', sets: '', reps: '', weight: '' }])
@@ -43,24 +41,9 @@ export default function CreatePostPage() {
 
   const handlePost = async () => {
     setPosting(true)
-    const validRoutines = routines.filter(r => r.name.trim())
-    const finalImage = imageUrl || SAMPLE_IMAGES[category][0]
-
-    try {
-      await supabase.from('posts').insert({
-        user_id: user.id,
-        caption: caption.trim(),
-        image_url: finalImage,
-        category,
-        routine_data: validRoutines,
-        likes_count: 0,
-      })
-      navigate('/feed')
-    } catch (e) {
-      alert('게시물 등록 중 오류가 발생했습니다. Supabase 연결을 확인해주세요.')
-    } finally {
-      setPosting(false)
-    }
+    // TODO: 새로운 저장소 연결 후 실제 게시 구현 예정
+    await new Promise(r => setTimeout(r, 800))
+    navigate('/feed')
   }
 
   const nextStep = () => setStep(s => Math.min(s + 1, 3))

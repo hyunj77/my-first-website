@@ -38,9 +38,6 @@ jobs:
 
       - name: Build mini_sns (Fitsta)
         working-directory: mini_sns
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Prepare deployment structure
